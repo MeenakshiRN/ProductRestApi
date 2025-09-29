@@ -1,0 +1,42 @@
+version: "3.9"
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: salessavvy-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: sqlroot
+      MYSQL_DATABASE: salesdb
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -p\"${MYSQL_ROOT_PASSWORD}\" --silent"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  app:
+    build: .
+    container_name: salesdb
+    ports: 
+      - "9090:9090"
+    depends_on:
+      - db
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://db:3306/salesdb
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: sqlroot
+      SPRING_JPA_HIBERNATE_DDL_AUTO: validate 
+      JWT_SECRET: your-very-long-secure-secret-key-for-production-12345678901234567890
+      JWT_EXPIRATION: 3600000
+      RAZORPAY_KEY_ID: rzp_test_RIKyI15WlmUPjC
+      RAZORPAY_KEY_SECRET: xOjqupA4fTRm9IMpan6QqMvm
+    volumes:
+      - ./src/main/resources/application.properties:/app/config/application.properties
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
